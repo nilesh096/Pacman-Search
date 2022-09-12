@@ -144,12 +144,64 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    path = []
+    visited = set()
+    start_state = problem.getStartState()
+    fringe_list = [(start_state, path)]
+
+    visited.add(start_state)
+
+    while len(fringe_list) != 0:
+
+        state, curr_path =fringe_list.pop(0)
+
+        if problem.isGoalState(state):
+
+            return curr_path
+        
+        successors = problem.getSuccessors(state)
+
+        for next_state, direction, _  in successors:
+
+            if next_state in visited:
+
+                continue
+            
+            else:
+
+                visited.add(next_state)
+                
+                fringe_list.append((next_state, curr_path + [direction]))
+    return []
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe_list = util.PriorityQueue()
+    visited = set()
+    path = []
+    start_state = problem.getStartState()
+
+    fringe_list.push((start_state, path, 0), priority=0)
+
+    while not fringe_list.isEmpty():
+
+        curr_state, curr_path, curr_cost = fringe_list.pop()
+
+        if problem.isGoalState(curr_state):
+
+            return curr_path
+        
+        successors = problem.getSuccessors(curr_state)
+
+        if curr_state not in visited:
+            for next_state, direction, cost in successors:
+                
+                fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost)
+
+            visited.add(curr_state)
+    return []
 
 def nullHeuristic(state, problem=None):
     """
