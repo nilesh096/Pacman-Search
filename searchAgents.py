@@ -321,12 +321,12 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
-        current_state, corners_visited = state
-        corners_visited = list(corners_visited)
-        x_pos, y_pos = current_state
-
+        
         def checkIfCorner(x, y):
             return (x, y) in self.corners
+
+        def isVisited (corner, visited):
+            return corner in visited
 
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
@@ -337,21 +337,25 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            current_state, corners_visited = state
+            corners_visited = list(corners_visited)
+            x_pos, y_pos = current_state
+
             # list of tuple having next state, direction and cost
             x_delta, y_delta = Actions.directionToVector(action)
             new_x, new_y = int(x_pos + x_delta), int(y_pos + y_delta)
 
-            if checkIfCorner(new_x, new_y):
+            if self.walls[new_x][new_y]:
+                continue
+
+            if checkIfCorner(new_x, new_y) and not (isVisited((new_x, new_y), corners_visited)):
+                corners_visited.append((new_x, new_y))
                 
-                if (new_x, new_y) not in corners_visited:
+            successors.append((((new_x, new_y), tuple(corners_visited)), action, 1))
 
-                    corners_visited.append((new_x, new_y))
-
-            if not self.walls[new_x][new_y]:     
-                successors.append((((new_x, new_y), tuple(corners_visited)), action, 1))
-
-        self._expanded += 1 # DO NOT CHANGE
+        self._expanded += 1 # DO NOT CHANGE 
         return successors
+    
 
     def getCostOfActions(self, actions):
         """
