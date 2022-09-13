@@ -384,8 +384,44 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+
+    def isGoalStateReached (remaining_corners):
+        if len(remaining_corners) != 0:
+            return False
+        return True
+
+    def getManhattanDistance(curr_x, curr_y, goal_x, goal_y):
+        h = abs (curr_x - goal_x) + abs (curr_y - goal_y)
+        return h
+
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+
+    remaining_corners = set()
+    current_state = state[0]
+    visited_corners = state[1]
+
+    i = 0
+    while i < len(corners):
+        if corners[i] in visited_corners:
+            i += 1
+        else:
+            remaining_corners.add(corners[i])
+            i += 1
+    
+    if isGoalStateReached(remaining_corners):
+        return 0
+    
+    min_corner_x, min_corner_y = remaining_corners[0]
+
+    min_cost = getManhattanDistance(current_state[0], current_state[1], min_corner_x, min_corner_y)
+
+    i = 1
+    while i < len(remaining_corners):
+        distance = getManhattanDistance(current_state[0], current_state[1], 
+                                        remaining_corners[i][0], remaining_corners[i][1])
+        
+
 
     "*** YOUR CODE HERE ***"
     return 0 # Default to trivial solution
