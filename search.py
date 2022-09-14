@@ -195,12 +195,17 @@ def uniformCostSearch(problem):
         
         successors = problem.getSuccessors(curr_state)
 
-        if curr_state not in visited:
-            for next_state, direction, cost in successors:
-                
-                fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost)
-
+        if curr_state in visited:
+            continue
+        else:
             visited.add(curr_state)
+            for idx, successor_data in enumerate(successors):
+                next_state, direction, cost = successor_data
+                if next_state in visited:
+                    continue
+                else:
+                    fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost)
+
     return []
 
 def nullHeuristic(state, problem=None):
@@ -230,12 +235,17 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         
         successors = problem.getSuccessors(curr_state)
 
-        if curr_state not in visited:
-            for next_state, direction, cost in successors:
-                
-                fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost + heuristic(next_state, problem))
-
+        if curr_state in visited:
+            continue
+        else:
             visited.add(curr_state)
+            for idx, successor_data in enumerate(successors):
+                next_state, direction, cost = successor_data
+                if next_state in visited:
+                    continue
+                else:
+                    fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost + heuristic(next_state, problem))
+
             
     return []
 

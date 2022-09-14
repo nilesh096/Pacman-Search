@@ -40,6 +40,7 @@ from game import Actions
 import util
 import time
 import search
+import sys
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -384,7 +385,7 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-
+        
     def isGoalStateReached (remaining_corners):
         if len(remaining_corners) != 0:
             return False
@@ -397,18 +398,12 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    remaining_corners = set()
+
     current_state = state[0]
     visited_corners = state[1]
 
-    i = 0
-    while i < len(corners):
-        if corners[i] in visited_corners:
-            i += 1
-        else:
-            remaining_corners.add(corners[i])
-            i += 1
-    
+    remaining_corners = [corner for corner in corners if corner not in visited_corners]
+
     if isGoalStateReached(remaining_corners):
         return 0
     
@@ -420,7 +415,40 @@ def cornersHeuristic(state, problem):
     while i < len(remaining_corners):
         distance = getManhattanDistance(current_state[0], current_state[1], 
                                         remaining_corners[i][0], remaining_corners[i][1])
+        if distance <= min_cost:
+            min_cost = distance
+            min_corner_x, min_corner_y = remaining_corners[i][0], remaining_corners[i][1]
+        i += 1
+    
+    selected_corners = [(min_corner_x, min_corner_y)]
+
+    num_iter = len(remaining_corners) - 1
+
+    for i in range(num_iter):
         
+        min_distance = sys.maxsize
+        min_corner = None
+
+        for remaining_corner in remaining_corners:
+
+            if remaining_corner not in selected_corners:
+                
+                selected_corner = selected_corners[-1]
+
+                corner_distance = getManhattanDistance(selected_corner[0], selected_corner[1], 
+                                                        remaining_corner[0], remaining_corner[1])
+
+                if corner_distance <= min_distance:
+
+                    min_distance = corner_distance
+
+                    min_corner  = remaining_corner
+                
+                selected_corners.append(min_corner)
+        
+        min_cost += min_distance
+        
+    return min_cost
 
 
     "*** YOUR CODE HERE ***"
@@ -518,7 +546,20 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+
+    max_cost = 0
+    if not foodGrid.count():
+        return 0
+
+    foodList = foodGrid.asList()
+    
+    for i in range(len(foodList)-1, -1, -1):
+        cost = mazeDistance(position, foodList[i], problem.startingGameState)
+        if max_cost < cost:
+            max_cost = cost
+
+    return max_cost
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
