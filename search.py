@@ -17,6 +17,7 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
+import profile
 import util
 
 class SearchProblem:
@@ -88,54 +89,35 @@ def depthFirstSearch(problem):
     """
     "*** YOUR CODE HERE ***"
     
-    # visited = set()
-    # directions = []
-
-    # def dfs_recur (problem, state, path, isCompleted):
-    #     if isCompleted:
-    #         return path
-
-    #     if problem.isGoalState(state):
-    #         isCompleted = True
-    #         print path
-    #         return path
-        
-    #     if state in visited:
-    #         return path
-
-    #     visited.add(state)
-
-    #     successors = problem.getSuccessors(state)
-
-    #     for i in range(len(successors)):
-    #         if successors[i][0] not in visited:
-    #             direction = successors[i][1]
-    #             dfs_recur(problem, successors[i][0], path + [direction], isCompleted)
-
-    # directions = dfs_recur(problem, problem.getStartState(), [], False)
-
-    # print(directions)
-    # print "Total Count: ", len(directions)
-    #util.raiseNotDefined()
-
+    # Maintaining path as a list
     path = []
     start_state = problem.getStartState()
+
+    # Initilaizing a list of tuples for maintaining the fringe list
     fringe_list = [(start_state, path)] 
+
+    # Using a set to keep track of visited as searching in a set takes O(1) complexity
     visited = set()
 
     while len(fringe_list) != 0: 
         state, current_path = fringe_list.pop()
+
+        # if goal state is achieved, return the path
         if problem.isGoalState(state):
             return current_path
         
+        # Updating visited if the state is evaluated
         visited.add(state)
 
+        # Fetching the successors of the current state
         successors = problem.getSuccessors(state)
         
         i = 0
         while i < len(successors):
             if successors[i][0] in visited:
                 i += 1
+            # if successor node/state is not visited, then add to fringe list
+            # and current path
             else:
                fringe_list.append((successors[i][0], current_path + [successors[i][1]]))
                i += 1
@@ -145,21 +127,30 @@ def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
 
+    # Maintaining path as a list
     path = []
+
+    # Using a set to keep track of visited as searching in a set takes O(1) complexity
     visited = set()
+
     start_state = problem.getStartState()
+
+    # Initilaizing a list of tuples for maintaining the fringe list as Queue
+    # Keeping state and path in the data structure
     fringe_list = [(start_state, path)]
 
     visited.add(start_state)
 
     while len(fringe_list) != 0:
 
-        state, curr_path =fringe_list.pop(0)
+        # Pop from index 0, FIFO nature
+        state, curr_path = fringe_list.pop(0)
 
         if problem.isGoalState(state):
 
             return curr_path
         
+        # Returns all the children states/nodes of the current state
         successors = problem.getSuccessors(state)
 
         for next_state, direction, _  in successors:
@@ -168,6 +159,7 @@ def breadthFirstSearch(problem):
 
                 continue
             
+            # if successor state or node not in visited, add it to fringe list
             else:
 
                 visited.add(next_state)
@@ -178,35 +170,46 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
+    
+    # Maining fringelist as a priority queue
     fringe_list = util.PriorityQueue()
+
+    # Maintaining path as a list
     visited = set()
     path = []
     start_state = problem.getStartState()
 
+    # Initialize fringe list with start state and priority as 0
+    # Data structure consists of start_state, path and cost
     fringe_list.push((start_state, path, 0), priority=0)
 
     while not fringe_list.isEmpty():
 
         curr_state, curr_path, curr_cost = fringe_list.pop()
-
-        if problem.isGoalState(curr_state):
-
-            return curr_path
-        
-        successors = problem.getSuccessors(curr_state)
-
+ 
         if curr_state in visited:
             continue
         else:
             visited.add(curr_state)
+
+            # if goal state achieved, return the path
+            if problem.isGoalState(curr_state):
+                return curr_path
+
+            # get successors of current state/node
+            successors = problem.getSuccessors(curr_state)
+
             for idx, successor_data in enumerate(successors):
                 next_state, direction, cost = successor_data
                 if next_state in visited:
                     continue
                 else:
+                    # if next state is not visited, then add the node direction and the cost
+                    # Since a priority of 1 is added, it behaves like a queue                    
                     fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost)
 
     return []
+    
 
 def nullHeuristic(state, problem=None):
     """
@@ -218,35 +221,44 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+
+    # Maining fringelist as a priority queue
     fringe_list = util.PriorityQueue()
+
+    # Maintaining path as a list
     visited = set()
     path = []
     start_state = problem.getStartState()
 
+    # Initialize fringe list with start state and priority as 0
+    # Data structure consists of start_state, path and cost
     fringe_list.push((start_state, path, 0), priority=0)
 
     while not fringe_list.isEmpty():
 
         curr_state, curr_path, curr_cost = fringe_list.pop()
 
+        # if goal state achieved, return the path
         if problem.isGoalState(curr_state):
 
             return curr_path
         
-        successors = problem.getSuccessors(curr_state)
 
         if curr_state in visited:
             continue
         else:
             visited.add(curr_state)
+
+            # get successors of current state/node
+            successors = problem.getSuccessors(curr_state)
             for idx, successor_data in enumerate(successors):
                 next_state, direction, cost = successor_data
                 if next_state in visited:
                     continue
                 else:
+                    # if next state is not visited, then add the node direction and the cost
+                    # Adding the heuristic to cost to update priority
                     fringe_list.push((next_state, curr_path + [direction], curr_cost + cost), curr_cost + cost + heuristic(next_state, problem))
-
-            
     return []
 
 

@@ -286,6 +286,8 @@ class CornersProblem(search.SearchProblem):
             if not startingGameState.hasFood(*corner):
                 print 'Warning: no food in corner ' + str(corner)
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
+        # Game State is preserved for use in MazeDistance
+        self.startingGameState = startingGameState
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
@@ -296,6 +298,7 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
+        # Start state stores starting position and an empty tuple for keeping corners visited
         return (self.startingPosition, tuple())
         util.raiseNotDefined()
 
@@ -305,6 +308,7 @@ class CornersProblem(search.SearchProblem):
         """
         "*** YOUR CODE HERE ***"
         _, corners_visited = state
+        # if less than 4 corners visited goal state is not reached
         if len(corners_visited) != 4:
             return False
         return True
@@ -322,12 +326,15 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
-        
+        # Checking if position is a corner or not
         def checkIfCorner(x, y):
             return (x, y) in self.corners
 
+        # Check if corner is visited or not
         def isVisited (corner, visited):
-            return corner in visited
+            if corner not in visited:
+                return False
+            return True
 
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
@@ -338,20 +345,26 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            # Get current state and corners that are visited
             current_state, corners_visited = state
             corners_visited = list(corners_visited)
+            # Get x and y coordinates from current state 
             x_pos, y_pos = current_state
 
             # list of tuple having next state, direction and cost
             x_delta, y_delta = Actions.directionToVector(action)
+            # Get new x and y position from delta
             new_x, new_y = int(x_pos + x_delta), int(y_pos + y_delta)
 
+            # If new position is a wall, try another direction
             if self.walls[new_x][new_y]:
                 continue
-
+            
+            # if successor is a corner, then add it to list of visited corners
             if checkIfCorner(new_x, new_y) and not (isVisited((new_x, new_y), corners_visited)):
                 corners_visited.append((new_x, new_y))
-                
+            
+            # Append to successors , new position, tuple of visited corners, direction and cost
             successors.append((((new_x, new_y), tuple(corners_visited)), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE 
@@ -385,74 +398,30 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-        
-    def isGoalStateReached (remaining_corners):
-        if len(remaining_corners) != 0:
+
+    "*** YOUR CODE HERE ***"
+
+    # Check from list of visited corners, wether goal state is reached
+    def isGoalState(visited_corners):
+        if len(visited_corners) != 4:
             return False
         return True
 
-    def getManhattanDistance(curr_x, curr_y, goal_x, goal_y):
-        h = abs (curr_x - goal_x) + abs (curr_y - goal_y)
-        return h
-
-    corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-
-    current_state = state[0]
+    current_state = state[0] 
     visited_corners = state[1]
-
-    remaining_corners = [corner for corner in corners if corner not in visited_corners]
-
-    if isGoalStateReached(remaining_corners):
+    if isGoalState(visited_corners):
         return 0
+    maze_distances = []
+    # Get Game state from initizalization
+    game_state = problem.startingGameState
+    # Get corners that are yet to be visited
+    remaining_corners = [corner for corner in problem.corners if corner not in visited_corners]
     
-    min_corner_x, min_corner_y = remaining_corners[0]
-
-    min_cost = getManhattanDistance(current_state[0], current_state[1], min_corner_x, min_corner_y)
-
-    i = 1
-    while i < len(remaining_corners):
-        distance = getManhattanDistance(current_state[0], current_state[1], 
-                                        remaining_corners[i][0], remaining_corners[i][1])
-        if distance <= min_cost:
-            min_cost = distance
-            min_corner_x, min_corner_y = remaining_corners[i][0], remaining_corners[i][1]
-        i += 1
-    
-    selected_corners = [(min_corner_x, min_corner_y)]
-
-    num_iter = len(remaining_corners) - 1
-
-    for i in range(num_iter):
-        
-        min_distance = sys.maxsize
-        min_corner = None
-
-        for remaining_corner in remaining_corners:
-
-            if remaining_corner not in selected_corners:
-                
-                selected_corner = selected_corners[-1]
-
-                corner_distance = getManhattanDistance(selected_corner[0], selected_corner[1], 
-                                                        remaining_corner[0], remaining_corner[1])
-
-                if corner_distance <= min_distance:
-
-                    min_distance = corner_distance
-
-                    min_corner  = remaining_corner
-                
-                selected_corners.append(min_corner)
-        
-        min_cost += min_distance
-        
-    return min_cost
-
-
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    # Compute maze distance (uses BFS) to get distance to each of the remaining corners  
+    for idx, corner in enumerate(remaining_corners):
+        maze_distances.append(mazeDistance(current_state, remaining_corners[idx], gameState=game_state))
+    # Return max of the distances as a heuristic value. As atleast this much distance must be covered.
+    return max(maze_distances)
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -550,11 +519,14 @@ def foodHeuristic(state, problem):
     max_cost = 0
     if not foodGrid.count():
         return 0
-
+    
+    # Getting list of food positions
     foodList = foodGrid.asList()
     
     for i in range(len(foodList)-1, -1, -1):
+        # Get maze Distance (using BFS) to get cost to each food item
         cost = mazeDistance(position, foodList[i], problem.startingGameState)
+        # Update max_cost variable to be the maximum cost for any food item
         if max_cost < cost:
             max_cost = cost
 
